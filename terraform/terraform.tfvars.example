@@ -1,0 +1,29 @@
+name = "terraform-cluster"
+project = "defaultproject"
+rafay_config_file = "~/.rafay/cli/config.json"
+
+labels = {
+  terraform-generated = "true"
+}
+
+cluster = {
+  cloud_credentials = "some-cloud-credentials"
+  region = "us-west-2"
+  cidr = "192.168.0.0/16"
+  cni_provider = "aws-cni"
+  private_access = true
+  public_access = false
+  version = "1.21"
+}
+
+node_group = {
+  ami_family = "AmazonLinux2"
+  instance_name = "some-instance-name"
+  instance_type = "t2.xlarge"
+  name = "ng-1"
+  ssh_allow = true
+  ssh_public_key_name = "some-keypair"
+  min_size = 1
+  max_size = 2
+  desired_capacity = 1
+}
