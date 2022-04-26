@@ -24,4 +24,4 @@ do
   echo "      roles: [Worker]" >> cluster.yaml
 done
 
-rctl create cluster mks -p benhealey -f cluster.yaml
+rctl create cluster mks -p $(grep project terraform.tfvars | awk '{print $3}' | cut -f2 -d\") -f cluster.yaml
