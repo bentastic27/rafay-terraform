@@ -4,7 +4,6 @@ metadata:
   labels:
     type: mks
   name: some-cluster
-  project: benhealey
 spec:
   type: mks
   blueprint: default
