@@ -33,6 +33,7 @@ resource "oci_core_instance" "master_instance" {
     assign_public_ip          = true
     assign_private_dns_record = true
     hostname_label            = format("%s-%s-%d", var.instance_name_prefix, "master", count.index)
+    nsg_ids = var.security_groups
   }
 
   source_details {
@@ -66,6 +67,7 @@ resource "oci_core_instance" "worker_instance" {
     assign_public_ip          = true
     assign_private_dns_record = true
     hostname_label            = format("%s-%s-%d", var.instance_name_prefix, "worker", count.index)
+    nsg_ids = var.security_groups
   }
 
   source_details {

@@ -46,6 +46,10 @@ variable "instance_name_prefix" {
   default = "oci-tf-test"
 }
 
+variable "security_groups" {
+  type = list(string)
+}
+
 variable "master_count" {
   type = number
   default = 1

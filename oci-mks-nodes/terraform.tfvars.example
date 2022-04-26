@@ -11,6 +11,10 @@ instance_name_prefix = "node name prefix"
 master_count = 3
 worker_count = 3
 
+security_groups = [
+    "some security group ocid"
+]
+
 subnet_id = "subnet ocid"
 ssh_public_key = "your ssh public key"
 
