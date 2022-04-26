@@ -4,6 +4,9 @@ terraform apply
 
 cp cluster-base.yaml cluster.yaml
 
+CLUSTER_NAME=$(grep cluster_name terraform.tfvars | awk '{print $3}'| cut -f2 -d\")
+sed -i "s/some-cluster/${CLUSTER_NAME}/g" cluster.yaml
+
 for masterip in $(terraform show -json | jq -r '.values.root_module.resources | .[] | select(.name == "master_instance") | .values.display_name + "," + .values.public_ip')
 do
   echo "    - hostname: $(echo $masterip | cut -f1 -d,)" >> cluster.yaml
