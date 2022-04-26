@@ -8,3 +8,7 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 *.lock.hcl
+*credentials.pem
+*passphrase.txt
+conjurer-linux-amd64.tar.bz2
+/oci-mks-nodes/cluster.yaml

@@ -1,0 +1,19 @@
+project = "some-project"
+cluster_name = "cluster-name"
+
+user_ocid = "user oicd here"
+fingerprint = "oci fingerprint here"
+tenancy_ocid = "tenancy ocid here"
+compartment_id = "compartment ocid"
+region = "us-phoenix-1"
+
+instance_name_prefix = "node name prefix"
+master_count = 3
+worker_count = 3
+
+subnet_id = "subnet ocid"
+ssh_public_key = "your ssh public key"
+
+private_key = <<EOT
+your OCI private key here
+EOT
