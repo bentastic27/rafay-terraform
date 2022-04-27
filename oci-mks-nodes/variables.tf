@@ -41,6 +41,11 @@ variable "ssh_public_key" {
   type = string
 }
 
+variable "ssh_private_key_file" {
+  type = string
+  default = "~/.ssh/id_rsa"
+}
+
 variable "instance_name_prefix" {
   type = string
   default = "oci-tf-test"
@@ -85,6 +90,11 @@ variable "image_ocid" {
   # https://docs.oracle.com/en-us/iaas/images/image/0b74ea17-87a5-4f6d-bc7d-dbd62c138f4a/
   type = string
   default = "ocid1.image.oc1.phx.aaaaaaaan3xenf5nz6jgwmseebf2moledl23zsnwekvqok2u3kh77fhketeq"
+}
+
+variable "image_user" {
+  type = string
+  default = "ubuntu"
 }
 
 variable "availability_domain" {

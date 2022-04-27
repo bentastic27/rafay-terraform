@@ -47,6 +47,24 @@ resource "oci_core_instance" "master_instance" {
   }
 
   state = "RUNNING"
+
+  connection {
+    type = "ssh"
+    host = "${self.public_ip}"
+    user = var.image_user
+    private_key = "${file(var.ssh_private_key_file)}"
+  }
+
+  provisioner "file" {
+    source = "remote-scripts/fix-iptables.sh"
+    destination = "/tmp/fix-iptables.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo sh /tmp/fix-iptables.sh"
+    ]
+  }
 }
 
 resource "oci_core_instance" "worker_instance" {
@@ -81,6 +99,24 @@ resource "oci_core_instance" "worker_instance" {
   }
 
   state = "RUNNING"
+
+  connection {
+    type = "ssh"
+    host = "${self.public_ip}"
+    user = var.image_user
+    private_key = "${file(var.ssh_private_key_file)}"
+  }
+
+  provisioner "file" {
+    source = "remote-scripts/fix-iptables.sh"
+    destination = "/tmp/fix-iptables.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo sh /tmp/fix-iptables.sh"
+    ]
+  }
 }
 
 output "masters" {
