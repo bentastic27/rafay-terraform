@@ -45,7 +45,7 @@ resource "aws_instance" "k3s_server" {
 
   user_data = <<EOF
 #!/bin/bash
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} sh -
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} INSTALL_K3S_EXEC="server --disable=metrics-server,traefik,servicelb" sh -
   EOF
 
   provisioner "local-exec" {

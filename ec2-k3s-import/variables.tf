@@ -5,7 +5,7 @@ variable "rafay_project" {
 
 variable "rafay_blueprint" {
   type = string
-  default = "minimal"
+  default = "default"
 }
 
 variable "rafay_config_file" {
