@@ -12,3 +12,4 @@ override.tf.json
 *passphrase.txt
 conjurer-linux-amd64.tar.bz2
 /oci-mks-nodes/cluster.yaml
+ec2-k3s-import/import.yaml
