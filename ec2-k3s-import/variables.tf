@@ -47,6 +47,11 @@ variable "instance_ami_user" {
   default = "ubuntu"
 }
 
+variable "k3s_disable_string" {
+  type = string
+  default = "metrics-server,traefik,servicelb" # for default blueprint
+}
+
 variable "instance_keypair_file" {
   type = string
 }
