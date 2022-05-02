@@ -28,6 +28,8 @@ variable "cluster" {
     cloud_credentials = string
     private_access = bool
     public_access = bool
+    blueprint = string
+    blueprint_version = string
   })
   default = {
     region = "us-west-2"
@@ -37,6 +39,8 @@ variable "cluster" {
     private_access = true
     public_access = false
     version = "1.21"
+    blueprint = "default"
+    blueprint_version = "latest"
   }
 }
 

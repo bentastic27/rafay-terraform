@@ -14,6 +14,8 @@ cluster = {
   private_access = true
   public_access = false
   version = "1.21"
+  blueprint = "default"
+  blueprint_version = "latest"
 }
 
 node_group = {
