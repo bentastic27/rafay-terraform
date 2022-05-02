@@ -36,13 +36,6 @@ resource "aws_instance" "k3s_server" {
 
   security_groups = var.security_groups
 
-  # connection {
-  #   type = "ssh"
-  #   host = self.public_ip
-  #   user = var.instance_ami_user
-  #   private_key = "${file(var.instance_keypair_file)}"
-  # }
-
   user_data = <<EOF
 #!/bin/bash
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} INSTALL_K3S_EXEC="server --cluster-init ${length(var.k3s_disable_string) > 0 ? join(" ", ["--disable", var.k3s_disable_string]) : ""}" sh -
