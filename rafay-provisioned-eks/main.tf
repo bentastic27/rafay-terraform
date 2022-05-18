@@ -53,6 +53,8 @@ resource "rafay_eks_cluster" "ekscluster" {
         iam_node_group_with_addon_policies {
           image_builder = true
           auto_scaler   = true
+          alb_ingress = true
+          ebs = true
         }
       }
       ssh {
@@ -66,7 +68,7 @@ resource "rafay_eks_cluster" "ekscluster" {
       min_size         = var.node_group.min_size
       max_size         = var.node_group.max_size
       max_pods_per_node = 50
-      version          = "1.21"
+      version          = var.cluster.version
       volume_size      = 50
       volume_type      = "gp3"
       private_networking = true
