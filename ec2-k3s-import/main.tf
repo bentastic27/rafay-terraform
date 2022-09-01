@@ -24,6 +24,7 @@ resource "aws_instance" "k3s_server" {
     Name = var.instance_name
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
+    cliConfigLocation = var.rafay_config_file
   }
 
   subnet_id = var.subnet_id
@@ -45,7 +46,7 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} INSTALL_K3
     when = create
     command = <<EOT
     until [ "$(curl -k -s -w '%%{http_code}' -o /dev/null https://${self.public_ip}:6443)" -eq 401 ]; do sleep 5; done
-    rctl create cluster imported ${var.rafay_cluster_name} -p ${var.rafay_project} -b ${var.rafay_blueprint} -l aws/${var.region} > import.yaml
+    rctl -c ${var.rafay_config_file} create cluster imported ${var.rafay_cluster_name} -p ${var.rafay_project} -b ${var.rafay_blueprint} -l aws/${var.region} > import.yaml
     scp -o StrictHostKeyChecking=no -i ${var.instance_keypair_file} import.yaml ${var.instance_ami_user}@${aws_instance.k3s_server.public_ip}:/tmp/import.yaml
     ssh -o StrictHostKeyChecking=no -i ${var.instance_keypair_file} ${var.instance_ami_user}@${aws_instance.k3s_server.public_ip}  "sudo kubectl apply -f /tmp/import.yaml"
     EOT
@@ -53,7 +54,7 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} INSTALL_K3
 
   provisioner "local-exec" {
     when = destroy
-    command = "rctl delete cluster ${self.tags.RafayClusterName} -p ${self.tags.RafayProject} -y && echo '' > import.yaml"
+    command = "rctl -c ${self.tags.cliConfigLocation} delete cluster ${self.tags.RafayClusterName} -p ${self.tags.RafayProject} -y && echo '' > import.yaml"
   }
 }
 
