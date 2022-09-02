@@ -13,3 +13,4 @@ override.tf.json
 conjurer-linux-amd64.tar.bz2
 /oci-mks-nodes/cluster.yaml
 ec2-k3s-import/import.yaml
+ec2-kubeadm-import/import.yaml
