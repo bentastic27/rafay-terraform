@@ -80,8 +80,8 @@ resource "local_file" "ansible_inventory" {
     aws_instance.kubeadm_worker
   ]
 
-  filename = "ansible-output/inventory.ini"
-  content = templatefile("./inventory.tftpl",
+  filename = "${path.module}/ansible-output/inventory.ini"
+  content = templatefile("${path.module}/inventory.tftpl",
     {
       ansible_become_user = "root"
       ansible_user = "ubuntu"
@@ -97,15 +97,16 @@ resource "local_file" "ansible_inventory" {
   )
 
   file_permission = "0644"
+  directory_permission = "0755"
 
   provisioner "local-exec" {
     when = create
-    command = "ansible-playbook -i ansible-output/inventory.ini ./playbook.yaml"
+    command = "ansible-playbook -i ${path.module}/ansible-output/inventory.ini ${path.module}/playbook.yaml"
   }
 
     provisioner "local-exec" {
     when = destroy
-    command = "rm -rf ansible-output/*"
+    command = "rm -f ${path.module}/ansible-output/*"
   }
 }
 
