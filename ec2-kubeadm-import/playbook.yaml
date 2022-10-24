@@ -84,6 +84,13 @@
         src: ansible-files/kubernetes-sources.list
         dest: /etc/apt/sources.list.d/kubernetes.list
         mode: '0644'
+    - name: Generate and copy kubeadm-config.yaml
+      ansible.builtin.template:
+        src: ansible-files/kubeadm-config.yaml.j2
+        dest: /tmp/kubeadm-config.yaml
+        mode: '0644'
+      vars:
+        control_plane_endpoint: "{{ kube_api_nlb_hostname }}:6443"
     - name: Install kubeadm
       ansible.builtin.apt:
         pkg:
@@ -93,6 +100,7 @@
           - kubeadm={{ kubernetes_version }}-00
           - kubectl={{ kubernetes_version }}-00
         update_cache: true
+
 - name: Initialize first master
   hosts: masters[0]
   become: true
@@ -107,13 +115,6 @@
           - kubernetes >= 12.0.0
           - PyYAML >= 3.11
           - jsonpatch
-    - name: Generate and copy kubeadm-config.yaml
-      ansible.builtin.template:
-        src: ansible-files/kubeadm-config.yaml.j2
-        dest: /tmp/kubeadm-config.yaml
-        mode: '0644'
-      vars:
-        control_plane_endpoint: "{{ ansible_host }}:6443"
     - name: Kubeadm init # only runs if kubelet is not active
       ansible.builtin.shell: >
         systemctl is-active --quiet kubelet.service || \
@@ -137,7 +138,6 @@
       loop:
         - tigera-operator.yaml
         - calico-custom-resources.yaml
-
 
 - name: Join nodes
   hosts:
@@ -182,20 +182,17 @@
         - node-role.kubernetes.io/master
 
 - name: Get kubeconfig
-  hosts: masters[0]
-  become: true
+  hosts: masters[0], localhost
   tasks:
-    - name: Copy kubeconfig to tmp
-      ansible.builtin.copy:
-        src: /etc/kubernetes/admin.conf
-        dest: /tmp/kubeconfig.yaml
-        mode: '0600'
-        remote_src: true
-    - name: Modify api endpoint
-      ansible.builtin.shell: >
-        kubectl --kubeconfig /tmp/kubeconfig.yaml config set clusters.kubernetes.server https://{{ ansible_host }}:6443
     - name: Download kubeconfig
+      become: true
+      when: inventory_hostname == groups['masters'][0]
       ansible.builtin.fetch:
-        src: /tmp/kubeconfig.yaml
+        src: /etc/kubernetes/admin.conf
         dest: ansible-output/kubeconfig.yaml
         flat: true
+    - name: Fix kubeconfig permissions
+      when: inventory_hostname == "localhost"
+      ansible.builtin.file:
+        mode: "0600"
+        path: "{{ playbook_dir }}/ansible-output/kubeconfig.yaml"

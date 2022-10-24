@@ -1,14 +1,13 @@
 aws_credentials_file = "~/.aws/credentials"
-subnet_id = "subnet id" # should be a public subnet
-instance_name = "name of instance"
 key_name = "name of keypair" # name of keypair in EC2
-security_groups = [ "sg-050c2b9e5fdd6b97a" ]
 instance_keypair_file = "~/.ssh/somekeypair.pem" # path to your EC2 keypair
 
 rafay_config_file = "~/.rafay/cli/config.json"
 rafay_cluster_name = "cluster-name-in-rafay"
 rafay_project = "project in rafay"
 rafay_import = true
+
+resource_name_prefix = "yourname-ec2-kubeadm"
 
 kubernetes_version = "1.24.4"
 calico_version = "3.24.1"
