@@ -8,6 +8,7 @@ instance_keypair_file = "~/.ssh/somekeypair.pem" # path to your EC2 keypair
 rafay_config_file = "~/.rafay/cli/config.json"
 rafay_cluster_name = "cluster-name-in-rafay"
 rafay_project = "project in rafay"
+rafay_import = true
 
 kubernetes_version = "1.24.4"
 calico_version = "3.24.1"
@@ -15,3 +16,6 @@ containerd_release_version = "1.6.8"
 runc_release_version = "1.1.4"
 
 instance_type = "t2.xlarge"
+
+worker_count = 3
+master_count = 1

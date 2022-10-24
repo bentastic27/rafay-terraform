@@ -1,0 +1,20 @@
+# generated with terraform, proceed with caution
+
+[all:vars]
+ansible_become_user=${ansible_become_user}
+ansible_user=${ansible_user}
+kubernetes_version="${kubernetes_version}"
+containerd_release_version="${containerd_release_version}"
+runc_release_version="${runc_release_version}"
+calico_version="${calico_version}"
+ansible_ssh_private_key_file="${ansible_ssh_private_key_file}"
+
+[masters]
+%{ for master in masters}
+${ master }
+%{ endfor ~}
+
+[workers]
+%{ for worker in workers}
+${ worker }
+%{ endfor ~}
