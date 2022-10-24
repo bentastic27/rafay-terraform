@@ -1,3 +1,9 @@
+variable "resource_name_prefix" {
+  type = string
+  default = "yourname-ec2-kubeadm"
+  description = "Prefix of resource names in AWS"
+}
+
 variable "rafay_project" {
   type = string
   default = "defaultproject"
@@ -23,18 +29,9 @@ variable "aws_credentials_file" {
   default = "~/.aws/credentials"
 }
 
-variable "security_groups" {
-  type = list(string)
-}
-
 variable "region" {
   type = string
   default = "us-west-2"
-}
-
-variable "instance_name" {
-  type = string
-  default = "tf-example"
 }
 
 variable "instance_ami_id" {
@@ -57,10 +54,6 @@ variable "instance_type" {
 }
 
 variable "key_name" {
-  type = string
-}
-
-variable "subnet_id" {
   type = string
 }
 
