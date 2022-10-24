@@ -66,7 +66,7 @@ variable "subnet_id" {
 
 variable "containerd_release_version" {
   type = string
-  default = "1.6.8"
+  default = "1.6.9"
 }
 
 variable "runc_release_version" {
@@ -81,12 +81,12 @@ variable "root_volume_size" {
 
 variable "kubernetes_version" {
   type = string
-  default = "1.24.4"
+  default = "1.25.3"
 }
 
 variable "calico_version" {
   type = string
-  default = "3.24.1"
+  default = "3.24.3"
 }
 
 variable "master_count" {
