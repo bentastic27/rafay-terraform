@@ -88,3 +88,8 @@ variable "calico_version" {
   type = string
   default = "3.24.1"
 }
+
+variable "master_count" {
+  type = number
+  default = 1
+}

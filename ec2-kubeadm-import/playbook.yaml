@@ -1,0 +1,141 @@
+---
+- name: Kubeadm prereqs
+  hosts: all
+  become: true
+  tasks:
+    - name: Download containerd
+      ansible.builtin.get_url:
+        url: https://github.com/containerd/containerd/releases/download/v{{ containerd_release_version }}/containerd-{{ containerd_release_version }}-linux-amd64.tar.gz
+        dest: /tmp/containerd.tar.gz
+        mode: '0644'
+    - name: Extract containerd
+      ansible.builtin.unarchive:
+        src: /tmp/containerd.tar.gz
+        dest: /usr/local
+        remote_src: true
+    - name: Download containerd service file
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+        dest: /etc/systemd/system/containerd.service
+        mode: '0644'
+    - name: Create /etc/containerd directory
+      ansible.builtin.file:
+        path: /etc/containerd
+        state: directory
+        mode: '0755'
+    - name: Copy containerd.toml
+      ansible.builtin.copy:
+        src: ansible-files/containerd.toml
+        dest: /etc/containerd/config.toml
+        mode: '0644'
+    - name: Download and install runc
+      ansible.builtin.get_url:
+        url: https://github.com/opencontainers/runc/releases/download/v{{ runc_release_version }}/runc.amd64
+        dest: /usr/local/sbin/runc
+        mode: '0755'
+    - name: Start and enable containerd
+      ansible.builtin.systemd:
+        state: started
+        daemon_reload: true
+        enabled: true
+        name: containerd.service
+    - name: Load overlay and br_netfilter modules
+      community.general.modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - overlay
+        - br_netfilter
+    - name: Persist overlay and br_netfilter modules
+      ansible.builtin.lineinfile:
+        path: /etc/modules
+        line: "{{ item }}"
+        insertafter: EOF
+      loop:
+        - overlay
+        - br_netfilter
+    - name: Sysctl params
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_set: true
+        state: present
+        reload: true
+      loop:
+        - { name: "net.bridge.bridge-nf-call-iptables", value: 1}
+        - { name: "net.bridge.bridge-nf-call-ip6tables", value: 1}
+        - { name: "net.ipv4.ip_forward", value: 1}
+    - name: Download kubernetes-archive-keyring.gpg
+      ansible.builtin.get_url:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+        mode: '0644'
+    - name: Copy /etc/apt/sources.list.d/kubernetes.list
+      ansible.builtin.copy:
+        src: ansible-files/kubernetes-sources.list
+        dest: /etc/apt/sources.list.d/kubernetes.list
+        mode: '0644'
+    - name: Install kubeadm
+      ansible.builtin.apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - kubelet={{ kubernetes_version }}-00
+          - kubeadm={{ kubernetes_version }}-00
+          - kubectl={{ kubernetes_version }}-00
+        update_cache: true
+    - name: Copy containerd.toml
+      ansible.builtin.copy:
+        src: ansible-files/kubeadm-config.yaml
+        dest: /tmp/kubeadm-config.yaml
+        mode: '0644'
+- name: Initialize first master
+  hosts: masters[0]
+  become: true
+  tasks:
+    - name: Install pip
+      ansible.builtin.apt:
+        pkg:
+          - pip
+    - name: Install Python modules for Kubernetes
+      ansible.builtin.pip:
+        name:
+          - kubernetes >= 12.0.0
+          - PyYAML >= 3.11
+          - jsonpatch
+    - name: Kubeadm init # only runs if kubelet is not active
+      ansible.builtin.shell: systemctl is-active --quiet kubelet.service || echo Service is running kubeadm init --config /tmp/kubeadm-config.yaml
+    - name: Download calico manifets
+      ansible.builtin.get_url:
+        url: "{{ item.url }}"
+        dest: /tmp/{{ item.filename }}
+        mode: '0664'
+      loop:
+        - url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml"
+          filename: tigera-operator.yaml
+        - url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml"
+          filename: calico-custom-resources.yaml
+    - name: Install Calico
+      kubernetes.core.k8s:
+        kubeconfig: /etc/kubernetes/admin.conf
+        state: present
+        src: "/tmp/{{ item }}"
+      loop:
+        - tigera-operator.yaml
+        - calico-custom-resources.yaml
+- name: Join remaining masters
+  hosts: masters[1:]
+  become: true
+- name: Remove master taints if no masters
+  tasks:
+    - name: Untaint masters
+      when: num_of_workers == 0
+      vars:
+        num_of_workers: "{{ groups['workers'] | length}}"
+      kubernetes.core.k8s_taint:
+        state: absent
+        name: foo # TODO: 
+        taints:
+        - effect: NoExecute
+          key: "key1"
+          value: "value1"

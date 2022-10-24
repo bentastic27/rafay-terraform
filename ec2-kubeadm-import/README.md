@@ -1,0 +1,1 @@
+Requires ansible (`brew install ansible`) and kubernetes.core and community.general modules (`ansible-galaxy collection install kubernetes.core community.general`)

@@ -15,7 +15,9 @@ provider "aws" {
   shared_credentials_file = var.aws_credentials_file
 }
 
-resource "aws_instance" "kubeadm_server" {
+resource "aws_instance" "kubeadm_master" {
+  count = var.master_count
+
   ami           = var.instance_ami_id
   instance_type = var.instance_type
   associate_public_ip_address = true
@@ -36,69 +38,6 @@ resource "aws_instance" "kubeadm_server" {
   }
 
   security_groups = var.security_groups
-
-  user_data = <<EOF
-#!/bin/bash
-apt-get update
-apt-get install -y apt-transport-https ca-certificates curl wget
-
-wget -q https://github.com/containerd/containerd/releases/download/v${var.containerd_release_version}/containerd-${var.containerd_release_version}-linux-amd64.tar.gz
-tar Cxzvf /usr/local containerd-${var.containerd_release_version}-linux-amd64.tar.gz
-curl -o /etc/systemd/system/containerd.service https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-systemctl daemon-reload
-
-mkdir -p /etc/containerd
-cat <<BLAH | tee /etc/containerd/config.toml
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-    SystemdCgroup = true
-BLAH
-
-wget -q https://github.com/opencontainers/runc/releases/download/v${var.runc_release_version}/runc.amd64
-install -m 755 runc.amd64 /usr/local/sbin/runc
-
-systemctl enable --now containerd
-
-cat <<BLAH | tee /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
-BLAH
-
-modprobe overlay
-modprobe br_netfilter
-
-cat <<BLAH | tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
-BLAH
-
-sudo sysctl --system
-
-cat <<BLAH | tee kubeadm-config.yaml
-kind: ClusterConfiguration
-apiVersion: kubeadm.k8s.io/v1beta3
-networking:
-  podSubnet: 192.168.0.0/16
----
-kind: KubeletConfiguration
-apiVersion: kubelet.config.k8s.io/v1beta1
-cgroupDriver: systemd
-BLAH
-
-curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
-apt-get update
-apt-get install -y kubelet=${var.kubernetes_version}-00 kubeadm=${var.kubernetes_version}-00 kubectl=${var.kubernetes_version}-00
-apt-mark hold kubelet kubeadm kubectl
-
-kubeadm init --config kubeadm-config.yaml
-
-kubectl --kubeconfig /etc/kubernetes/admin.conf create -f https://raw.githubusercontent.com/projectcalico/calico/v${var.calico_version}/manifests/tigera-operator.yaml
-kubectl --kubeconfig /etc/kubernetes/admin.conf create -f https://raw.githubusercontent.com/projectcalico/calico/v${var.calico_version}/manifests/custom-resources.yaml
-kubectl --kubeconfig /etc/kubernetes/admin.conf taint nodes --all node-role.kubernetes.io/control-plane-
-kubectl --kubeconfig /etc/kubernetes/admin.conf taint nodes --all node-role.kubernetes.io/master-
-  EOF
 
   provisioner "local-exec" {
     when = create
