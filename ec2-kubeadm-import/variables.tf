@@ -93,3 +93,13 @@ variable "master_count" {
   type = number
   default = 1
 }
+
+variable "worker_count" {
+  type = number
+  default = 1
+}
+
+variable "rafay_import" {
+  default = true
+  type = bool
+}

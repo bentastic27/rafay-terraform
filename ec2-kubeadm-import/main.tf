@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 3.27"
     }
+    rafay = {
+      source = "RafaySystems/rafay"
+      version = "1.1.0"
+    }
   }
 
   required_version = ">= 0.14.9"
@@ -15,6 +19,10 @@ provider "aws" {
   shared_credentials_file = var.aws_credentials_file
 }
 
+provider "rafay" {
+  provider_config_file = var.rafay_config_file
+}
+
 resource "aws_instance" "kubeadm_master" {
   count = var.master_count
 
@@ -23,7 +31,7 @@ resource "aws_instance" "kubeadm_master" {
   associate_public_ip_address = true
 
   tags = {
-    Name = var.instance_name
+    Name = "${var.instance_name}-master"
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
     cliConfigLocation = var.rafay_config_file
@@ -39,24 +47,76 @@ resource "aws_instance" "kubeadm_master" {
 
   security_groups = var.security_groups
 
-  provisioner "local-exec" {
-    when = create
-    command = <<EOT
-    until [ "$(curl -k -s -w '%%{http_code}' -o /dev/null https://${self.public_ip}:6443/healthz)" -eq 200 ]; do sleep 5; done
-    rctl -c ${var.rafay_config_file} create cluster imported ${var.rafay_cluster_name} -p ${var.rafay_project} -b ${var.rafay_blueprint} -l aws/${var.region} > import.yaml
-    scp -o StrictHostKeyChecking=no -i ${var.instance_keypair_file} import.yaml ${var.instance_ami_user}@${self.public_ip}:/tmp/import.yaml
-    ssh -o StrictHostKeyChecking=no -i ${var.instance_keypair_file} ${var.instance_ami_user}@${self.public_ip}  "sudo kubectl --kubeconfig /etc/kubernetes/admin.conf apply -f /tmp/import.yaml"
-    EOT
+}
+
+resource "aws_instance" "kubeadm_worker" {
+  count = var.worker_count
+
+  ami           = var.instance_ami_id
+  instance_type = var.instance_type
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "${var.instance_name}-worker"
+    RafayClusterName = var.rafay_cluster_name
+    RafayProject = var.rafay_project
+    cliConfigLocation = var.rafay_config_file
   }
 
+  subnet_id = var.subnet_id
+  key_name = var.key_name
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = var.root_volume_size
+  }
+
+  security_groups = var.security_groups
+}
+
+resource "local_file" "ansible_inventory" {
+  depends_on = [
+    aws_instance.kubeadm_master,
+    aws_instance.kubeadm_worker
+  ]
+
+  filename = "ansible-output/inventory.ini"
+  content = templatefile("./inventory.tftpl",
+    {
+      ansible_become_user = "root"
+      ansible_user = "ubuntu"
+      kubernetes_version = var.kubernetes_version
+      containerd_release_version = var.containerd_release_version
+      runc_release_version = var.runc_release_version
+      calico_version = var.calico_version
+      ansible_ssh_private_key_file = var.instance_keypair_file
+
+      masters = aws_instance.kubeadm_master[*].public_ip
+      workers = aws_instance.kubeadm_worker[*].public_ip
+    }
+  )
+
+  file_permission = "0644"
+
   provisioner "local-exec" {
+    when = create
+    command = "ansible-playbook -i ansible-output/inventory.ini ./playbook.yaml"
+  }
+
+    provisioner "local-exec" {
     when = destroy
-    command = "rctl -c ${self.tags.cliConfigLocation} delete cluster ${self.tags.RafayClusterName} -p ${self.tags.RafayProject} -y && echo '' > import.yaml"
+    command = "rm -rf ansible-output/*"
   }
 }
 
-output "kubeadm-info" {
-  value = [
-    "ssh ${var.instance_ami_user}@${aws_instance.kubeadm_server.public_ip} -i ${var.instance_keypair_file}",
+resource "rafay_import_cluster" "terraform-importcluster" {
+  count = var.rafay_import ? 1 : 0
+
+  depends_on = [
+    local_file.ansible_inventory
   ]
+  clustername       = var.rafay_cluster_name
+  projectname       = var.rafay_project
+  blueprint         = var.rafay_blueprint
+  kubeconfig_path   = "ansible-output/kubeconfig.yaml"
 }

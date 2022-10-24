@@ -1,4 +1,13 @@
 ---
+- name: Wait for nodes to become available
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Wait for nodes to become available
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 300
+
 - name: Kubeadm prereqs
   hosts: all
   become: true
@@ -84,11 +93,6 @@
           - kubeadm={{ kubernetes_version }}-00
           - kubectl={{ kubernetes_version }}-00
         update_cache: true
-    - name: Copy containerd.toml
-      ansible.builtin.copy:
-        src: ansible-files/kubeadm-config.yaml
-        dest: /tmp/kubeadm-config.yaml
-        mode: '0644'
 - name: Initialize first master
   hosts: masters[0]
   become: true
@@ -103,8 +107,18 @@
           - kubernetes >= 12.0.0
           - PyYAML >= 3.11
           - jsonpatch
+    - name: Generate and copy kubeadm-config.yaml
+      ansible.builtin.template:
+        src: ansible-files/kubeadm-config.yaml.j2
+        dest: /tmp/kubeadm-config.yaml
+        mode: '0644'
+      vars:
+        control_plane_endpoint: "{{ ansible_host }}:6443"
     - name: Kubeadm init # only runs if kubelet is not active
-      ansible.builtin.shell: systemctl is-active --quiet kubelet.service || echo Service is running kubeadm init --config /tmp/kubeadm-config.yaml
+      ansible.builtin.shell: >
+        systemctl is-active --quiet kubelet.service || \
+        kubeadm init --config /tmp/kubeadm-config.yaml --node-name {{ inventory_hostname }} \
+        --upload-certs
     - name: Download calico manifets
       ansible.builtin.get_url:
         url: "{{ item.url }}"
@@ -123,19 +137,65 @@
       loop:
         - tigera-operator.yaml
         - calico-custom-resources.yaml
-- name: Join remaining masters
-  hosts: masters[1:]
+
+
+- name: Join nodes
+  hosts:
+    - workers
+    - masters
   become: true
-- name: Remove master taints if no masters
   tasks:
-    - name: Untaint masters
-      when: num_of_workers == 0
+    - name: Get worker join command
+      ansible.builtin.shell: >
+        kubeadm token create --print-join-command
+      when: inventory_hostname == groups['masters'][0]
+      register: worker_join_command
+    - name: Get master join command
+      ansible.builtin.shell: >
+        echo $(kubeadm token create --print-join-command) --control-plane --certificate-key $(kubeadm init phase upload-certs --upload-certs | tail -1)
+      when: inventory_hostname == groups['masters'][0]
+      register: master_join_command
+    - name: Join masters
+      ansible.builtin.shell: >
+        systemctl is-active --quiet kubelet.service || \
+        {{ hostvars[groups['masters'][0]]['master_join_command']['stdout'] }} --node-name {{ inventory_hostname }}
+      when: inventory_hostname in groups['masters'] and inventory_hostname != groups['masters'][0]
+    - name: Join workers
+      ansible.builtin.shell: >
+        systemctl is-active --quiet kubelet.service || \
+        {{ hostvars[groups['masters'][0]]['worker_join_command']['stdout'] }} --node-name {{ inventory_hostname }}
+      when: inventory_hostname in groups['workers']
+    - name: Untaint masters if no workers
+      delegate_to: "{{ groups['masters'][0] }}"
+      when: num_of_workers == "0" and inventory_hostname in groups['masters']
       vars:
-        num_of_workers: "{{ groups['workers'] | length}}"
+        num_of_workers: "{{ groups['workers'] | length }}"
       kubernetes.core.k8s_taint:
+        kubeconfig: /etc/kubernetes/admin.conf
         state: absent
-        name: foo # TODO: 
+        name: "{{ inventory_hostname }}"
         taints:
-        - effect: NoExecute
-          key: "key1"
-          value: "value1"
+          - effect: NoSchedule
+            key: "{{ item }}"
+      loop:
+        - node-role.kubernetes.io/control-plane
+        - node-role.kubernetes.io/master
+
+- name: Get kubeconfig
+  hosts: masters[0]
+  become: true
+  tasks:
+    - name: Copy kubeconfig to tmp
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /tmp/kubeconfig.yaml
+        mode: '0600'
+        remote_src: true
+    - name: Modify api endpoint
+      ansible.builtin.shell: >
+        kubectl --kubeconfig /tmp/kubeconfig.yaml config set clusters.kubernetes.server https://{{ ansible_host }}:6443
+    - name: Download kubeconfig
+      ansible.builtin.fetch:
+        src: /tmp/kubeconfig.yaml
+        dest: ansible-output/kubeconfig.yaml
+        flat: true
