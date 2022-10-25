@@ -31,7 +31,10 @@ resource "aws_instance" "kubeadm_master" {
   key_name = var.key_name
 
   subnet_id = aws_subnet.subnet.id
-  vpc_security_group_ids = [aws_security_group.allow_all.id]
+  vpc_security_group_ids = [
+    aws_security_group.k8s_api.id,
+    aws_security_group.k8s_worker.id
+  ]
 
   root_block_device {
     volume_type = "gp2"
@@ -56,7 +59,9 @@ resource "aws_instance" "kubeadm_worker" {
   key_name = var.key_name
 
   subnet_id = aws_subnet.subnet.id
-  vpc_security_group_ids = [aws_security_group.allow_all.id]
+  vpc_security_group_ids = [
+    aws_security_group.k8s_worker
+  ]
 
   root_block_device {
     volume_type = "gp2"

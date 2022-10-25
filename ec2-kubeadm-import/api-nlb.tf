@@ -1,5 +1,5 @@
 resource "aws_lb" "kube_api_nlb" {
-  name               = "${var.resource_name_prefix}-subnet"
+  name               = "${var.resource_name_prefix}-nlb"
   internal           = false
   load_balancer_type = "network"
   subnets            = [aws_subnet.subnet.id]
