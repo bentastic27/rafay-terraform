@@ -122,22 +122,14 @@
         --upload-certs
     - name: Download calico manifets
       ansible.builtin.get_url:
-        url: "{{ item.url }}"
-        dest: /tmp/{{ item.filename }}
-        mode: '0664'
-      loop:
-        - url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml"
-          filename: tigera-operator.yaml
-        - url: "https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/custom-resources.yaml"
-          filename: calico-custom-resources.yaml
+        url: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+        dest: /tmp/kube-flannel.yaml
+        mode: '0644'
     - name: Install Calico
       kubernetes.core.k8s:
         kubeconfig: /etc/kubernetes/admin.conf
         state: present
-        src: "/tmp/{{ item }}"
-      loop:
-        - tigera-operator.yaml
-        - calico-custom-resources.yaml
+        src: /tmp/kube-flannel.yaml
 
 - name: Join nodes
   hosts:

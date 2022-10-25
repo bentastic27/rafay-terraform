@@ -13,7 +13,6 @@ resource "local_file" "ansible_inventory" {
       kubernetes_version = var.kubernetes_version
       containerd_release_version = var.containerd_release_version
       runc_release_version = var.runc_release_version
-      calico_version = var.calico_version
       ansible_ssh_private_key_file = var.instance_keypair_file
       kube_api_nlb_hostname = aws_lb.kube_api_nlb.dns_name
 

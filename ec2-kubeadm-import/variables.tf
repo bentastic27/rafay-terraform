@@ -77,11 +77,6 @@ variable "kubernetes_version" {
   default = "1.25.3"
 }
 
-variable "calico_version" {
-  type = string
-  default = "3.24.3"
-}
-
 variable "master_count" {
   type = number
   default = 1
