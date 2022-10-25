@@ -407,7 +407,7 @@ apiVersion: v1
 data:
   apiAddr: api.rafay.dev
   controlAddr: control.rafay.dev
-  token: cdbii7en7ipi9o75oo4g
+  token: cdbvetvo54jp4mibp9h0
 kind: ConfigMap
 metadata:
   annotations:

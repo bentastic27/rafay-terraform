@@ -32,7 +32,6 @@ resource "aws_instance" "kubeadm_master" {
 
   subnet_id = aws_subnet.subnet.id
   vpc_security_group_ids = [
-    aws_security_group.k8s_api.id,
     aws_security_group.k8s_worker.id
   ]
 

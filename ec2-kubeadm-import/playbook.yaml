@@ -120,12 +120,12 @@
         systemctl is-active --quiet kubelet.service || \
         kubeadm init --config /tmp/kubeadm-config.yaml --node-name {{ inventory_hostname }} \
         --upload-certs
-    - name: Download calico manifets
+    - name: Download flannel manifets
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
         dest: /tmp/kube-flannel.yaml
         mode: '0644'
-    - name: Install Calico
+    - name: Install flannel
       kubernetes.core.k8s:
         kubeconfig: /etc/kubernetes/admin.conf
         state: present

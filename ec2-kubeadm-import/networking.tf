@@ -42,9 +42,9 @@ resource "aws_route_table_association" "rta" {
   route_table_id = aws_route_table.rt.id
 }
 
-resource "aws_security_group" "k8s_api" {
-  name = "${var.resource_name_prefix}-kube-api"
-  description = "Port 6443 to the subnet"
+resource "aws_security_group" "k8s_worker" {
+  name        = "${var.resource_name_prefix}-k8s-workers"
+  description = "Kubernetes worker traffic"
   vpc_id      = aws_vpc.vpc.id
 
   ingress {
@@ -54,12 +54,6 @@ resource "aws_security_group" "k8s_api" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-}
-
-resource "aws_security_group" "k8s_worker" {
-  name        = "${var.resource_name_prefix}-k8s-workers"
-  description = "Kubernetes worker traffic"
-  vpc_id      = aws_vpc.vpc.id
 
   ingress {
     from_port        = 0
@@ -96,7 +90,15 @@ resource "aws_security_group" "k8s_worker" {
   ingress {
     from_port        = 30000
     to_port          = 32767
-    protocol         = "all"
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  ingress {
+    from_port        = 30000
+    to_port          = 32767
+    protocol         = "udp"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
