@@ -26,7 +26,6 @@ resource "aws_instance" "kubeadm_master" {
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
     cliConfigLocation = var.rafay_config_file
-    instanceKeypairFile = var.instance_keypair_file
   }
 
   key_name = var.key_name
@@ -39,22 +38,6 @@ resource "aws_instance" "kubeadm_master" {
   root_block_device {
     volume_type = "gp2"
     volume_size = var.root_volume_size
-  }
-
-  connection {
-    type     = "ssh"
-    user     = "ubuntu"
-    host     = self.public_ip
-    private_key = file(self.tags.instanceKeypairFile)
-  }
-
-  provisioner "remote-exec" {
-    when = destroy
-    inline = [
-      "sudo kubeadm reset phase remove-etcd-member",
-      "sudo kubectl --kubeconfig /etc/kubernetes/admin.conf delete node ${self.public_ip}",
-      "sudo kubeadm reset phase cleanup-node"
-    ]
   }
 }
 
@@ -70,23 +53,17 @@ resource "aws_instance" "kubeadm_worker" {
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
     cliConfigLocation = var.rafay_config_file
-    instanceKeypairFile = var.instance_keypair_file
   }
 
   key_name = var.key_name
 
   subnet_id = aws_subnet.subnet.id
   vpc_security_group_ids = [
-    aws_security_group.k8s_worker.id
+    aws_security_group.k8s_worker
   ]
 
   root_block_device {
     volume_type = "gp2"
     volume_size = var.root_volume_size
-  }
-
-  provisioner "local-exec" {
-    when = destroy
-    command = "kubectl --kubeconfig ${path.module}/ansible-output/kubeconfig.yaml delete node ${self.public_ip}"
-  }
+  } 
 }
