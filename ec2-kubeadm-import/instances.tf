@@ -59,7 +59,7 @@ resource "aws_instance" "kubeadm_worker" {
 
   subnet_id = aws_subnet.subnet.id
   vpc_security_group_ids = [
-    aws_security_group.k8s_worker
+    aws_security_group.k8s_worker.id
   ]
 
   root_block_device {
