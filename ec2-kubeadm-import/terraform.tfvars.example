@@ -10,7 +10,6 @@ rafay_import = true
 resource_name_prefix = "yourname-ec2-kubeadm"
 
 kubernetes_version = "1.24.4"
-calico_version = "3.24.1"
 containerd_release_version = "1.6.8"
 runc_release_version = "1.1.4"
 
