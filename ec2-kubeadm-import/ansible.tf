@@ -29,8 +29,18 @@ resource "local_file" "ansible_inventory" {
     command = "ansible-playbook -i ${path.module}/ansible-output/inventory.ini ${path.module}/playbook.yaml"
   }
 
-    provisioner "local-exec" {
+  provisioner "local-exec" {
     when = destroy
-    command = "rm -f ${path.module}/ansible-output/*"
+    command = "rm -f ${path.module}/ansible-output/inventory.ini"
   }
+}
+
+resource "null_resource" "cleanup" {
+  provisioner "local-exec" {
+    when = destroy
+    command = <<EOT
+      rm -f ${path.module}/ansible-output/*
+      rm ${path.module}/bootstrap.yaml
+    EOT
+  }  
 }

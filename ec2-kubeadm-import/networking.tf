@@ -47,6 +47,14 @@ resource "aws_security_group" "k8s_worker" {
   description = "Kubernetes worker traffic"
   vpc_id      = aws_vpc.vpc.id
 
+  ingress { # for kubectl exec to work, fix later so the proper internal IP is set on nodes
+    from_port = 10250
+    to_port = 10250
+    protocol = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  
   ingress {
     from_port = 6443
     to_port = 6443
