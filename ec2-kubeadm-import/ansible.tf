@@ -40,7 +40,9 @@ resource "null_resource" "cleanup" {
     when = destroy
     command = <<EOT
       rm -f ${path.module}/ansible-output/*
-      rm ${path.module}/bootstrap.yaml
+      if [ -f ${path.module}/bootstrap.yaml ]; then
+        rm ${path.module}/bootstrap.yaml
+      fi
     EOT
   }  
 }
