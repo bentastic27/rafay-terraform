@@ -43,13 +43,16 @@ resource "aws_instance" "kubeadm_master" {
   provisioner "local-exec" {
     when = destroy
     command = <<EOT
-      export KUBECONFIG=${path.module}/ansible-output/kubeconfig.yaml
-      alias etcd-exec="kubectl exec -ti -n kube-system $(kubectl get pods -n kube-system -l component=etcd -o name | head -1 | cut -f2 -d/) -- etcdctl --endpoints https://127.0.0.1:2379 --cert /etc/kubernetes/pki/etcd/peer.crt --key /etc/kubernetes/pki/etcd/peer.key --cacert /etc/kubernetes/pki/etcd/ca.crt"
+      if [ -f ${path.module}/ansible-output/kubeconfig.yaml]
+      then
+        export KUBECONFIG=${path.module}/ansible-output/kubeconfig.yaml
+        alias etcd-exec="kubectl exec -ti -n kube-system $(kubectl get pods -n kube-system -l component=etcd -o name | head -1 | cut -f2 -d/) -- etcdctl --endpoints https://127.0.0.1:2379 --cert /etc/kubernetes/pki/etcd/peer.crt --key /etc/kubernetes/pki/etcd/peer.key --cacert /etc/kubernetes/pki/etcd/ca.crt"
 
-      etcd-exec member remove $(etcd-exec member list | grep ${self.public_ip} | cut -f1 -d,)
+        etcd-exec member remove $(etcd-exec member list | grep ${self.public_ip} | cut -f1 -d,)
 
-      kubectl drain ${self.public_ip} --ignore-daemonsets --delete-local-data
-      kubectl delete node ${self.public_ip}
+        kubectl drain ${self.public_ip} --ignore-daemonsets --delete-local-data
+        kubectl delete node ${self.public_ip}
+      fi
     EOT
   }
 }
@@ -83,9 +86,12 @@ resource "aws_instance" "kubeadm_worker" {
   provisioner "local-exec" {
     when = destroy
     command = <<EOT
-      export KUBECONFIG=${path.module}/ansible-output/kubeconfig.yaml
-      kubectl drain ${self.public_ip} --ignore-daemonsets --delete-local-data
-      kubectl delete node ${self.public_ip}
+      if [ -f ${path.module}/ansible-output/kubeconfig.yaml]
+      then
+        export KUBECONFIG=${path.module}/ansible-output/kubeconfig.yaml
+        kubectl drain ${self.public_ip} --ignore-daemonsets --delete-local-data
+        kubectl delete node ${self.public_ip}
+      fi
     EOT
   }
 }
