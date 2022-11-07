@@ -1,4 +1,6 @@
 resource "local_file" "ansible_inventory" {
+  count = var.install_kubernetes ? 1 : 0
+
   depends_on = [
     aws_instance.kubeadm_master,
     aws_instance.kubeadm_worker,

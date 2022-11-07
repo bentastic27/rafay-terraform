@@ -1,3 +1,8 @@
+variable "install_kubernetes" {
+  type = bool
+  default = true
+}
+
 variable "resource_name_prefix" {
   type = string
   default = "yourname-ec2-kubeadm"

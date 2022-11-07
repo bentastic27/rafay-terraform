@@ -1,5 +1,3 @@
 output "kubectl" {
-  value = [
-    "kubectl --kubeconfig ${path.module}/ansible-output/kubeconfig.yaml get nodes"
-  ]
+  value = var.install_kubernetes ? "kubectl --kubeconfig ${path.module}/ansible-output/kubeconfig.yaml get nodes" : null
 }
