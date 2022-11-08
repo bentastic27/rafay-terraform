@@ -25,7 +25,6 @@ resource "aws_instance" "kubeadm_master" {
     Name = "${var.resource_name_prefix}-master"
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
-    cliConfigLocation = var.rafay_config_file
   }
 
   key_name = var.key_name
@@ -68,7 +67,6 @@ resource "aws_instance" "kubeadm_worker" {
     Name = "${var.resource_name_prefix}-worker"
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
-    cliConfigLocation = var.rafay_config_file
   }
 
   key_name = var.key_name
