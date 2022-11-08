@@ -22,7 +22,7 @@ resource "aws_instance" "kubeadm_master" {
   associate_public_ip_address = true
 
   tags = {
-    Name = "${var.resource_name_prefix}-master"
+    Name = "${var.resource_name_prefix}-master-${count.index}"
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
   }
@@ -64,7 +64,7 @@ resource "aws_instance" "kubeadm_worker" {
   associate_public_ip_address = true
 
   tags = {
-    Name = "${var.resource_name_prefix}-worker"
+    Name = "${var.resource_name_prefix}-worker-${count.index}"
     RafayClusterName = var.rafay_cluster_name
     RafayProject = var.rafay_project
   }
