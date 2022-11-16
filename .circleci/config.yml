@@ -5,10 +5,21 @@ version: 2.1
 orbs:
   terraform: circleci/terraform@3.2.0
 
+jobs:
+  example-job:
+    docker:
+      # replace with your preferred image
+      - image: cimg/base:stable
+    steps:
+      - terraform/validate:
+          path: ec2-kubeadm-import  
+
 workflows:
   example-workflow:
     jobs:
+    - example-job
     - terraform/init:
         resource_class: small 
         path: ec2-kubeadm-import 
-        checkout: true 
+        checkout: true
+
