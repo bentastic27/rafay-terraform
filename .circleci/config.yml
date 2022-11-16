@@ -13,5 +13,7 @@ workflows:
         path: ec2-kubeadm-import 
         checkout: true
     - terraform/validate:
+        resource_class: small 
         path: ec2-kubeadm-import  
+        checkout: true
 
