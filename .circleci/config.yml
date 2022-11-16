@@ -10,5 +10,5 @@ workflows:
     jobs:
     - terraform/init:
         resource_class: small 
-        path: /ec2-kubeadm-import 
+        path: ec2-kubeadm-import 
         checkout: true 
