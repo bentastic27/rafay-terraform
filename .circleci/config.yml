@@ -11,6 +11,7 @@ jobs:
       # replace with your preferred image
       - image: cimg/base:stable
     steps:
+      - checkout
       - terraform/validate:
           path: ec2-kubeadm-import  
 
